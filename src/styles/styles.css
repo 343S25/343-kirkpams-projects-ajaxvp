@@ -1,0 +1,87 @@
+:root {
+    --primary-bg-color: #F4F3EC;
+    --secondary-bg-color: #E2DEB6;
+    --secondary-bg-color-hover: #c5c2a1;
+}
+
+body {
+    font-family: 'IBM Plex Serif', 'Times New Roman', Times, serif;
+    background-color: var(--primary-bg-color);
+}
+
+pre {
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+    margin-bottom: 0;
+}
+
+.primary-bg-color {
+    background-color: var(--primary-bg-color);
+}
+
+.secondary-bg-color {
+    background-color: var(--secondary-bg-color);
+}
+
+.white-bg-color {
+    background-color: white;
+}
+
+/* selector for modules on dashboard */
+.dashboard>.row>div>div {
+    background-color: white;
+}
+
+.modal-content {
+    background-color: var(--primary-bg-color);
+}
+
+.selector-list>li:hover {
+    cursor: pointer;
+}
+
+.secondary-clickable {
+    background-color: var(--secondary-bg-color);
+}
+
+.secondary-clickable:hover {
+    background-color: var(--secondary-bg-color-hover);
+}
+
+.white-clickable {
+    background-color: white;
+}
+
+.white-clickable:hover {
+    background-color: #eeeeee;
+}
+
+/* Datepicker aesthetic changes */
+
+.datepicker-controls .next-button,
+.datepicker-controls .prev-button,
+.datepicker-controls .view-switch {
+    border: none;
+    background-color: var(--secondary-bg-color);
+}
+
+.datepicker-header .datepicker-controls {
+    padding: 0;
+}
+
+.datepicker-cell.selected {
+    color: black;
+    background-color: var(--secondary-bg-color);
+}
+
+.datepicker-cell.selected:hover {
+    color: black;
+    background-color: var(--secondary-bg-color-hover);
+}
+
+.module {
+    border-radius: 5px;
+}
+
+ul.dropdown-menu {
+    overflow-y: auto;
+}
