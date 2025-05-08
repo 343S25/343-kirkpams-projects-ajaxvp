@@ -37,77 +37,86 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <label for="modalAddExpenseVendorQuery" class="form-label">Choose or add a vendor:</label>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="modalAddExpenseVendorQuery"
-                            placeholder="Vendor name...">
-                        <button class="btn white-clickable border" type="button"
-                            id="modalAddExpenseVendorAdd">Add</button>
-                    </div>
-                    <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseVendorError"></div>
-                    <ul class="list-group selector-list mb-3" id="modalAddExpenseVendorSearchList"></ul>
+                    <form id="modalAddExpenseForm">
+                        <label for="modalAddExpenseVendorQuery" class="form-label">Choose or add a vendor:</label>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="modalAddExpenseVendorQuery"
+                                placeholder="Vendor name...">
+                            <button class="btn white-clickable border" type="button"
+                                id="modalAddExpenseVendorAdd">Add</button>
+                        </div>
+                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseVendorError"></div>
+                        <ul class="list-group selector-list mb-3" id="modalAddExpenseVendorSearchList"></ul>
 
-                    <div class="form-label">Do you have a list of items you
-                        purchased?</div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="modalAddExpenseExplicitPriceYes"
-                            id="modalAddExpenseExplicitPriceYes">
-                        <label class="form-check-label" for="modalAddExpenseExplicitPriceYes">Yes</label>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="radio" name="modalAddExpenseExplicitPriceNo"
-                            id="modalAddExpenseExplicitPriceNo">
-                        <label class="form-check-label" for="modalAddExpenseExplicitPriceNo">No</label>
-                    </div>
+                        <fieldset>
+                            <legend class="form-label fs-6">Do you have a list of items you
+                                purchased?</legend>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modalAddExpenseExplicitPrice"
+                                    id="modalAddExpenseExplicitPriceYes">
+                                <label class="form-check-label" for="modalAddExpenseExplicitPriceYes">Yes</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="modalAddExpenseExplicitPrice"
+                                    id="modalAddExpenseExplicitPriceNo">
+                                <label class="form-check-label" for="modalAddExpenseExplicitPriceNo">No</label>
+                            </div>
+                        </fieldset>
 
-                    <div class="d-none" id="modalAddExpenseExplicitPriceInputGroup">
-                        <label for="modalAddExpenseExplicitPrice" class="form-label">Enter the total price (without tax)
-                            of your expense:</label>
+                        <div class="d-none" id="modalAddExpenseExplicitPriceInputGroup">
+                            <label for="modalAddExpenseExplicitPrice" class="form-label">Enter the total price (without
+                                tax)
+                                of your expense:</label>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" id="modalAddExpenseExplicitPrice"
+                                    aria-label="Total price (no tax)">
+                            </div>
+                            <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseExplicitPriceError">
+                            </div>
+                        </div>
+
+                        <div class="d-none" id="modalAddExpenseItemSelectorInputGroup">
+                            <label for="modalAddExpenseItemSelectorQuery" class="form-label">Choose or create items to
+                                add
+                                to the expense:</label>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="modalAddExpenseItemSelectorQuery"
+                                    placeholder="Item name...">
+                                <button class="btn white-clickable border" type="button"
+                                    id="modalAddExpenseItemSelectorAdd">Add</button>
+                            </div>
+                            <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseItemSelectorError">
+                            </div>
+                            <ul class="list-group selector-list mb-3" id="modalAddExpenseItemSelectorSearchList"></ul>
+                            <ul class="list-group mb-3" id="modalAddExpenseItemList"></ul>
+                        </div>
+
+                        <label for="modalAddExpenseTax" class="form-label">Enter the total tax paid on your
+                            expense:</label>
                         <div class="input-group mb-3">
                             <span class="input-group-text">$</span>
-                            <input type="text" class="form-control" id="modalAddExpenseExplicitPrice"
-                                aria-label="Total price (no tax)">
+                            <input type="text" class="form-control" id="modalAddExpenseTax" aria-label="Total tax paid">
                         </div>
-                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseExplicitPriceError">
-                        </div>
-                    </div>
+                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseTaxError"></div>
 
-                    <div class="d-none" id="modalAddExpenseItemSelectorInputGroup">
-                        <label for="modalAddExpenseItemSelectorQuery" class="form-label">Choose or create items to add
-                            to the expense:</label>
+                        <label for="modalAddExpenseDate" class="form-label">Enter the date that this expense
+                            occurred:</label>
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="modalAddExpenseItemSelectorQuery"
-                                placeholder="Item name...">
-                            <button class="btn white-clickable border" type="button"
-                                id="modalAddExpenseItemSelectorAdd">Add</button>
+                            <input type="text" class="form-control" id="modalAddExpenseDate"
+                                aria-label="Date of the expense">
                         </div>
-                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseItemSelectorError"></div>
-                        <ul class="list-group selector-list mb-3" id="modalAddExpenseItemSelectorSearchList"></ul>
-                        <ul class="list-group mb-3" id="modalAddExpenseItemList"></ul>
-                    </div>
 
-                    <label for="modalAddExpenseTax" class="form-label">Enter the total tax paid on your expense:</label>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">$</span>
-                        <input type="text" class="form-control" id="modalAddExpenseTax" aria-label="Total tax paid">
-                    </div>
-                    <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseTaxError"></div>
+                        <label for="modalAddExpenseTime" class="form-label">Enter the time that this expense
+                            occurred, if any:</label>
+                        <div class="input-group mb-3">
+                            <input type="time" class="form-control" id="modalAddExpenseTime"
+                                aria-label="Time of the expense">
+                        </div>
+                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseDatetimeError"></div>
 
-                    <label for="modalAddExpenseDate" class="form-label">Enter the date that this expense
-                        occurred:</label>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="modalAddExpenseDate"
-                            aria-label="Date of the expense">
-                    </div>
-
-                    <label for="modalAddExpenseTime" class="form-label">Enter the time that this expense
-                        occurred, if any:</label>
-                    <div class="input-group mb-3">
-                        <input type="time" class="form-control" id="modalAddExpenseTime"
-                            aria-label="Time of the expense">
-                    </div>
-
-                    <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseError"></div>
+                        <div class="alert alert-danger d-none" role="alert" id="modalAddExpenseError"></div>
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn secondary-clickable" id="modalAddExpenseFinish">Add</button>
@@ -216,7 +225,8 @@
                 <h1 class="mb-3">Settings</h1>
                 <h2 class="fs-5">Currency Type</h2>
                 <div class="input-group mb-3">
-                    <a class="btn secondary-clickable dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="settingsCurrencyType">...</a>
+                    <a class="btn secondary-clickable dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false" id="settingsCurrencyType">...</a>
                     <ul class="dropdown-menu" id="settingsCurrencyList">
                         <li><a class="dropdown-item" href="#">Loading...</a></li>
                     </ul>

@@ -4,9 +4,40 @@ const historyLoaders = [
 ];
 
 /**
+ * Opens the "Edit" modal.
+ * @param {MouseEvent} ev
+ * @param {Expense} exp
+ */
+async function openModalEditExpense(ev, exp) {
+    el("modalAddExpenseLabel").textContent = "Edit Expense";
+    el("modalAddExpenseFinish").textContent = "Update";
+    modalAddExpenseState = structuredClone(exp);
+    el("modalAddExpenseVendorQuery").value = vendors[modalAddExpenseState.vendorId].name;
+    loadModalAddExpenseVendorSearchList(ev);
+    if (typeof modalAddExpenseState.total === "undefined" || modalAddExpenseState.total === -1) {
+        /** @type {HTMLInputElement} */
+        const yes = el("modalAddExpenseExplicitPriceYes");
+        yes.click();
+        await loadModalAddExpenseItemList(ev);
+    } else {
+        /** @type {HTMLInputElement} */
+        const no = el("modalAddExpenseExplicitPriceNo");
+        no.click();
+        const priceEl = el("modalAddExpenseExplicitPrice");
+        priceEl.value = modalAddExpenseState.total;
+    }
+    el("modalAddExpenseTax").value = modalAddExpenseState.tax;
+    el("modalAddExpenseDate").value = toDateSelectorDateString(modalAddExpenseState.time);
+    if (toFloorDay(modalAddExpenseState.time) !== 0) {
+        el("modalAddExpenseTime").value = toTimeSelectorTimeString(modalAddExpenseState.time);
+    }
+    modalAddExpense.show();
+}
+
+/**
  * @param {Expense} exp 
  */
-function createHistoryEntry(exp) {
+async function createHistoryEntry(exp) {
     const box = document.createElement("div");
     box.classList.add("border", "p-3", "module", "mb-3");
 
@@ -28,7 +59,7 @@ function createHistoryEntry(exp) {
     colLeft.appendChild(vendorName);
 
     const price = document.createElement("div");
-    price.textContent = toCurrencyString(getExpenseTotal(exp) + exp.tax);
+    price.textContent = await toCurrencyString(getExpenseTotal(exp) + exp.tax);
     colLeft.appendChild(price);
 
     if (items.length !== 0) {
@@ -51,6 +82,9 @@ function createHistoryEntry(exp) {
     editButton.classList.add("btn", "secondary-clickable", "me-2");
     // editButton.id = maybe we do this?
     editButton.textContent = "Edit";
+    editButton.addEventListener("click", ev => {
+        openModalEditExpense(ev, exp);
+    });
     colRight.appendChild(editButton);
 
     const deleteButton = document.createElement("button");
@@ -81,7 +115,7 @@ function createDayHeader(timestamp) {
     return el;
 }
 
-function loadHistory() {
+async function loadHistory() {
     const historyList = el("historyList");
     if (expenses.length === 0) {
         const h5 = document.createElement("h1");
@@ -94,13 +128,13 @@ function loadHistory() {
     const sorted = expenses
         .toSorted((e1, e2) => e2.time - e1.time);
     let lastDay = 0;
-    sorted.forEach(exp => {
+    for (const exp of sorted) {
         if (toFloorDay(exp.time) !== lastDay) {
             historyList.appendChild(createDayHeader(exp.time));
         }
-        historyList.appendChild(createHistoryEntry(exp));
+        historyList.appendChild(await createHistoryEntry(exp));
         lastDay = toFloorDay(exp.time);
-    });
+    }
 }
 
 (function () {

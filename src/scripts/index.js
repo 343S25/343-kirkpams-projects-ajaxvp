@@ -52,13 +52,14 @@ function getTotalSpentMonth() {
         .reduce(sum, 0);
 }
 
-function loadFieldTotalSpentMonth() {
+async function loadFieldTotalSpentMonth() {
     const total = getTotalSpentMonth();
-    el("fieldTotalSpentMonth").textContent = `${toCurrencyString(total)}/${toCurrencyString(settings.budget)}`;
+    el("fieldTotalSpentMonth").textContent = `${await toCurrencyString(total)}/${await toCurrencyString(settings.budget)}`;
 }
 
-function loadBudgetPieChart() {
+async function loadBudgetPieChart() {
     const total = getTotalSpentMonth();
+    const currencies = await currenciesPromise;
     new Chart(el("chartBudget"), {
         type: "doughnut",
         data: {
@@ -75,7 +76,7 @@ function loadBudgetPieChart() {
             plugins: {
                 tooltip: {
                     callbacks: {
-                        label: context => context.formattedValue = `${toCurrencyString(context.parsed)}`
+                        label: context => context.formattedValue = `${toCurrencyStringSync(context.parsed, currencies)}`
                     }
                 }
             },
@@ -85,7 +86,7 @@ function loadBudgetPieChart() {
     })
 }
 
-function loadDailyAmountSpentChart() {
+async function loadDailyAmountSpentChart() {
     const now = new Date();
     const thirtyDaysAgo = toFloorDay(now.getTime()) - 2_592_000_000;
     const length = 30;
@@ -103,6 +104,7 @@ function loadDailyAmountSpentChart() {
             const date = new Date(toFloorDay(now.getTime()) - ((length - 1 - i) * 86_400_000));
             return `${date.getMonth() + 1}/${date.getDate()}`;
         });
+    const currencies = await currenciesPromise;
     new Chart(el("chartDailyAmountSpent"), {
         type: "line",
         data: {
@@ -121,7 +123,7 @@ function loadDailyAmountSpentChart() {
                 },
                 tooltip: {
                     callbacks: {
-                        label: context => context.formattedValue = `${toCurrencyString(context.parsed.y)}`
+                        label: context => context.formattedValue = `${toCurrencyStringSync(context.parsed.y, currencies)}`
                     }
                 }
             },
@@ -129,7 +131,7 @@ function loadDailyAmountSpentChart() {
                 y: {
                     ticks: {
                         // Include a dollar sign in the ticks
-                        callback: value => toCurrencyString(value)
+                        callback: value => toCurrencyStringSync(value, currencies)
                     }
                 }
             },
@@ -169,7 +171,7 @@ function loadFieldTopPurchasedMonth() {
         el("fieldTopPurchasedMonth").textContent = "(none yet!)";
 }
 
-function loadFieldAverageDailyMonth() {
+async function loadFieldAverageDailyMonth() {
     // similar to the one above
     const totals = Array.from(expenses
         .filter(onlyThisMonth)
@@ -185,17 +187,17 @@ function loadFieldAverageDailyMonth() {
     const now = new Date();
 
     if (totals.length !== 0)
-        el("fieldAverageDailyMonth").textContent = toCurrencyString(totals.reduce(sum, 0) / daysInMonth(now.getMonth() + 1, now.getFullYear()));
+        el("fieldAverageDailyMonth").textContent = await toCurrencyString(totals.reduce(sum, 0) / daysInMonth(now.getMonth() + 1, now.getFullYear()));
     else
         el("fieldAverageDailyMonth").textContent = "(no purchases yet!)";
 }
 
-function loadFieldTotalSpentAllTime() {
+async function loadFieldTotalSpentAllTime() {
     const total = expenses
         .map(exp => getExpenseTotal(exp) + exp.tax)
         .reduce(sum, 0);
 
-    el("fieldTotalSpentAllTime").textContent = toCurrencyString(total);
+    el("fieldTotalSpentAllTime").textContent = await toCurrencyString(total);
 }
 
 function loadFieldTopVendorMonth() {
@@ -215,7 +217,7 @@ function loadFieldTopVendorMonth() {
         el("fieldTopVendorMonth").textContent = "(none yet!)";
 }
 
-function loadFieldTopSpendingMonth() {
+async function loadFieldTopSpendingMonth() {
     const max = Array.from(expenses
         .filter(onlyThisMonth)
         .map(exp => [toFloorDay(exp.time), getExpenseTotal(exp) + exp.tax])
@@ -229,19 +231,19 @@ function loadFieldTopSpendingMonth() {
         .reduce((prev, curr) => curr[1] > prev[1] ? curr : prev, [0, 0]);
 
     if (max[0])
-        el("fieldTopSpendingMonth").textContent = `${toCurrencyString(max[1])} (${toShortMonthDateString(max[0])})`;
+        el("fieldTopSpendingMonth").textContent = `${await toCurrencyString(max[1])} (${toShortMonthDateString(max[0])})`;
     else
         el("fieldTopSpendingMonth").textContent = "(no purchases yet!)";
 }
 
-function loadFieldRemainingBudget() {
-    el("fieldRemainingBudget").textContent = toCurrencyString(settings.budget - getTotalSpentMonth());
+async function loadFieldRemainingBudget() {
+    el("fieldRemainingBudget").textContent = await toCurrencyString(Math.max(0, settings.budget - getTotalSpentMonth()));
 }
 
 /**
  * @param {Expense} exp 
  */
-function createRecentPurchaseEntry(exp) {
+async function createRecentPurchaseEntry(exp) {
     const container = document.createElement("div");
     container.classList.add("container", "p-0");
 
@@ -256,13 +258,13 @@ function createRecentPurchaseEntry(exp) {
 
     const colRight = document.createElement("div");
     colRight.classList.add("col", "text-end");
-    colRight.textContent = toCurrencyString(getExpenseTotal(exp) + exp.tax);
+    colRight.textContent = await toCurrencyString(getExpenseTotal(exp) + exp.tax);
     row.appendChild(colRight);
 
     return container;
 }
 
-function loadModuleRecentPurchases() {
+async function loadModuleRecentPurchases() {
     const module = el("moduleRecentPurchasesPurchases");
 
     if (expenses.length === 0) {
@@ -274,9 +276,9 @@ function loadModuleRecentPurchases() {
     const sorted = expenses
         .toSorted((e1, e2) => e2.time - e1.time);
 
-    sorted
-        .slice(0, 5)
-        .forEach(exp => module.appendChild(createRecentPurchaseEntry(exp)));
+    for (const exp of sorted.slice(0, 5)) {
+        module.appendChild(await createRecentPurchaseEntry(exp))
+    }
 }
 
 (function () {

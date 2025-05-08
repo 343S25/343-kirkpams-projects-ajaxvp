@@ -4,8 +4,8 @@ const settingsLoaders = [
     loadFieldCurrencyType
 ];
 
-function loadFieldBudget() {
-    el("settingsBudget").value = `${toCurrencyString(settings.budget).replace("$", "")}`;
+async function loadFieldBudget() {
+    el("settingsBudget").value = `${(toCurrencyStringUSD(settings.budget)).replace("$", "")}`;
 }
 
 async function loadFieldCurrencyType() {
@@ -13,7 +13,7 @@ async function loadFieldCurrencyType() {
     list.innerHTML = "";
     const currencies = await currenciesPromise;
     currencies
-        .forEach(currency => {
+        .forEach((currency, k) => {
             if (currency.name.length === 0) {
                 return;
             }
@@ -22,6 +22,10 @@ async function loadFieldCurrencyType() {
             a.classList.add("dropdown-item");
             a.href = "#";
             a.textContent = currency.name;
+            li.addEventListener("click", ev => {
+                el("settingsCurrencyType").textContent = currency.name;
+                settings.currencyType = k;
+            });
             li.appendChild(a);
             list.appendChild(li);
         });

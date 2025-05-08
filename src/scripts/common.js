@@ -95,9 +95,37 @@ function toFloorDay(timestamp) {
 /**
  * Converts the number to the corresponding currency string.
  * @param {number} value 
+ * @returns {Promise<string>}
+ */
+async function toCurrencyString(value) {
+    try {
+        return toCurrencyStringSync(value, await currenciesPromise);
+    } catch {
+        return `${settings.currencyType.toUpperCase()} ${value}`;
+    }
+}
+
+/**
+ * Converts the number to the corresponding currency string.
+ * @param {number} value 
+ * @param {Map<string, Currency>} currencies
  * @returns {string}
  */
-function toCurrencyString(value) {
+function toCurrencyStringSync(value, currencies) {
+    try {
+        value = value * currencies.get(settings.currencyType).exchange;
+        return new Intl.NumberFormat("en-us", { style: "currency", currency: settings.currencyType.toUpperCase() }).format(value);
+    } catch {
+        return `${settings.currencyType.toUpperCase()} ${value}`;
+    }
+}
+
+/**
+ * Converts the number to the corresponding currency string.
+ * @param {number} value
+ * @returns {string}
+ */
+function toCurrencyStringUSD(value) {
     return new Intl.NumberFormat("en-us", { style: "currency", currency: "USD" }).format(value);
 }
 
@@ -117,6 +145,24 @@ function toDateString(timestamp) {
  */
 function toShortMonthDateString(timestamp) {
     return new Intl.DateTimeFormat("en-us", { day: "numeric", month: "numeric" }).format(new Date(timestamp));
+}
+
+/**
+ * Converts the timestamp to a formatted string like <month>/<day>/<year>
+ * @param {number} timestamp 
+ * @returns {string}
+ */
+function toDateSelectorDateString(timestamp) {
+    return new Intl.DateTimeFormat("en-us", { day: "numeric", month: "numeric", year: "numeric" }).format(new Date(timestamp));
+}
+
+/**
+ * Converts the timestamp to a formatted string like <24-hour>:<minute>
+ * @param {number} timestamp 
+ * @returns {string}
+ */
+function toTimeSelectorTimeString(timestamp) {
+    return new Intl.DateTimeFormat("en-us", { hour: "numeric", hour12: false, minute: "numeric" }).format(new Date(timestamp));
 }
 
 /**
@@ -191,6 +237,7 @@ function addExpense(exp) {
  */
 function removeExpense(id) {
     expenses.splice(id, 1);
+    expenses.forEach((exp, idx) => exp.id = idx);
 }
 
 /**
@@ -317,6 +364,8 @@ function setupConfirmation(action) {
  * @param {MouseEvent} ev 
  */
 function openModalAddExpense(ev) {
+    el("modalAddExpenseLabel").textContent = "Add Expense";
+    el("modalAddExpenseFinish").textContent = "Add";
     modalAddExpense.show();
 }
 
@@ -335,7 +384,14 @@ function loadModalAddExpenseVendorSearchList(ev) {
                 stateVendor && vendor.name === stateVendor.name);
             ul.appendChild(li);
             li.addEventListener("click", ev => {
+                const prev = modalAddExpenseState.vendorId;
                 modalAddExpenseState.vendorId = vendor.id;
+                if (prev !== vendor.id) {
+                    modalAddExpenseState.itemIds = [];
+                    modalAddExpenseState.itemQuantities = [];
+                    loadModalAddExpenseItemSelectorSearchList(ev);
+                    loadModalAddExpenseItemList(ev);
+                }
                 loadModalAddExpenseVendorSearchList(ev);
             });
         });
@@ -344,7 +400,8 @@ function loadModalAddExpenseVendorSearchList(ev) {
 /**
  * @param {Event} ev 
  */
-function loadModalAddExpenseItemSelectorSearchList(ev) {
+async function loadModalAddExpenseItemSelectorSearchList(ev) {
+    hideAlert("modalAddExpenseItemSelectorError");
     if (typeof modalAddExpenseState.vendorId === "undefined") {
         showAlert("modalAddExpenseItemSelectorError", "No vendor has been selected yet.");
         return;
@@ -353,34 +410,35 @@ function loadModalAddExpenseItemSelectorSearchList(ev) {
     const ul = el("modalAddExpenseItemSelectorSearchList");
     ul.innerHTML = "";
     const queryElement = el("modalAddExpenseItemSelectorQuery");
-    items
+    for (const item of items
         /* filters s/t the items shown will have names that contain the query string and 
            the vendor will have a product named as such */
         .filter(item => queryElement.value.length !== 0 &&
             considerForQuery(item.name, queryElement.value) &&
-            stateVendor.productIds.map(getItem).find(it => it.name === item.name))
-        .forEach(item => {
-            const li = createDoubleTextListItem(item.name, `${toCurrencyString(item.price)}`,
-                modalAddExpenseState.itemIds && modalAddExpenseState.itemIds.map(getItem).find(it => it.name === item.name));
-            ul.appendChild(li);
-            li.addEventListener("click", ev => {
-                modalAddExpenseState.itemIds.push(item.id);
-                modalSetQuantity.show();
-            });
+            stateVendor.productIds.map(getItem).find(it => it.name === item.name))) {
+        const li = createDoubleTextListItem(item.name, `${await toCurrencyString(item.price)}`,
+            modalAddExpenseState.itemIds && modalAddExpenseState.itemIds.map(getItem).find(it => it.name === item.name));
+        ul.appendChild(li);
+        li.addEventListener("click", ev => {
+            modalAddExpenseState.itemIds.push(item.id);
+            modalSetQuantity.show();
         });
+    }
 }
 
 /**
  * @param {Event} ev 
  */
-function loadModalAddExpenseItemList(ev) {
+async function loadModalAddExpenseItemList(ev) {
     const ul = el("modalAddExpenseItemList");
     ul.innerHTML = "";
-    modalAddExpenseState.itemIds.map(getItem).forEach((item, i) => {
+    const items = modalAddExpenseState.itemIds.map(getItem);
+    for (const i in items) {
+        const item = items[i];
         const quantity = modalAddExpenseState.itemQuantities[i];
-        const li = createDoubleTextListItem(`${item.name} ✕ ${quantity}`, `${toCurrencyString(item.price * quantity)}`, false);
+        const li = createDoubleTextListItem(`${item.name} ✕ ${quantity}`, `${await toCurrencyString(item.price * quantity)}`, false);
         ul.appendChild(li);
-    });
+    };
 }
 
 /**
@@ -471,9 +529,13 @@ function finishModalSetQuantity(ev) {
  */
 function resetModalAddExpense(ev) {
     modalAddExpenseState = { itemIds: [], itemQuantities: [] };
-    el("modalAddExpenseVendorQuery").value = "";
+    el("modalAddExpenseForm").reset();
     el("modalAddExpenseVendorSearchList").innerHTML = "";
-    hideAlert("modalAddExpenseVendorError");
+    el("modalAddExpenseItemSelectorSearchList").innerHTML = "";
+    el("modalAddExpenseItemList").innerHTML = "";
+    // hide all alerts
+    for (const al of el("modalAddExpenseForm").querySelectorAll(".alert"))
+        hideAlert(al.id);
     // TODO: remove vendors which have no associated expenses
 }
 
@@ -539,14 +601,21 @@ function setTaxModalAddExpense(ev) {
  * @param {Event} ev
  */
 function setTimestampModalAddExpense(ev) {
+    hideAlert("modalAddExpenseDatetimeError");
     const dateStr = el("modalAddExpenseDate").value.trim();
     if (dateStr.length === 0) {
-        modalAddExpenseState.time = 0;
+        modalAddExpenseState.time = undefined;
         return;
     }
     const date = new Date(dateStr);
     if (isNaN(date)) {
-        modalAddExpenseState.time = 0;
+        showAlert("modalAddExpenseDatetimeError", "Please enter a valid date.");
+        modalAddExpenseState.time = undefined;
+        return;
+    }
+    if (date.getTime() > new Date().getTime()) {
+        showAlert("modalAddExpenseDatetimeError", "Date must be in the past.");
+        modalAddExpenseState.time = undefined;
         return;
     }
     modalAddExpenseState.time = date.getTime();
@@ -557,22 +626,41 @@ function setTimestampModalAddExpense(ev) {
     const timeStrParts = timeStr.split(":");
     modalAddExpenseState.time += parseInt(timeStrParts[0]) * 3_600_000;
     modalAddExpenseState.time += parseInt(timeStrParts[1]) * 60_000;
+    if (date.getTime() > new Date().getTime()) {
+        showAlert("modalAddExpenseDatetimeError", "Date must be in the past.");
+        modalAddExpenseState.time = undefined;
+        return;
+    }
 }
 
 /**
  * @param {Event} ev
  */
 function finishModalAddExpense(ev) {
+    setTimestampModalAddExpense(ev);
     hideAlert("modalAddExpenseError");
-    addExpense(structuredClone(modalAddExpenseState));
+    if (((modalAddExpenseState.total === -1 || typeof modalAddExpenseState.total === "undefined" || isNaN(modalAddExpenseState.total)) &&
+        modalAddExpenseState.itemIds.length === 0) ||
+        typeof modalAddExpenseState.tax === "undefined" || isNaN(modalAddExpenseState.tax) ||
+        typeof modalAddExpenseState.time === "undefined" ||
+        typeof modalAddExpenseState.vendorId === "undefined") {
+        showAlert("modalAddExpenseError", "One or more fields have not been completed properly.");
+        return;
+    }
+    if (el("modalAddExpenseExplicitPriceYes").checked) {
+        modalAddExpenseState.total = -1;
+    } else {
+        modalAddExpenseState.itemIds = [];
+        modalAddExpenseState.itemQuantities = [];
+    }
+    if (typeof modalAddExpenseState.id !== "undefined") {
+        expenses[modalAddExpenseState.id] = structuredClone(modalAddExpenseState);
+    } else {
+        addExpense(structuredClone(modalAddExpenseState));
+    }
     updateBrowser();
     modalAddExpense.hide();
-    if (typeof loadFieldTotalSpentMonth !== "undefined") {
-        loadFieldTotalSpentMonth();
-    }
-    if (typeof loadBudgetPieChart !== "undefined") {
-        loadBudgetPieChart();
-    }
+    location.reload();
 }
 
 /**
@@ -615,10 +703,6 @@ async function loadCurrencyList() {
         // fallback fetch, this should NOT fail (besides CORS...)
         exchangesResp = await fetch("../data/exchange-list.json");
     }
-    // dr. stewart told me to log these...
-    console.log(currenciesResp);
-    console.log(exchangesResp);
-    //
     const exchangeRates = await exchangesResp.json();
     /** @type {Map<string, Currency>} */
     const currencies = new Map();
